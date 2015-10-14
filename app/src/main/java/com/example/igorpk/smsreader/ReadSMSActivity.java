@@ -10,6 +10,8 @@ import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -59,16 +61,25 @@ public class ReadSMSActivity extends Activity {
         // Fetch Inbox SMS Message from Built-in Content Provider
         Cursor c = cr.query(inboxURI, dbColumns, null, null, null);
 
+        // Set current timestamp for comparison later
+        long back24Hours = (System.currentTimeMillis() - 84600000);
+
         // Iterate over cursor to populate a string of messages
         while(c.moveToNext()) {
 
-            // We only want to retrieve SMS messages from FNB at this point
-            Pattern mPattern = Pattern.compile("^FNB.*");
+            long smsDate = Long.parseLong(c.getString(3));
 
-            Matcher matcher = mPattern.matcher(c.getString(2));
-            if(matcher.find())
-            {
-                smsAggregate += c.getString(2);
+            if(smsDate > (back24Hours) ) {
+                // We only want to retrieve SMS messages from FNB at this point
+                Pattern mPattern = Pattern.compile("^FNB\\s\\W{3}\\sR?.(\\d*\\.\\d*)");
+
+                Matcher matcher = mPattern.matcher(c.getString(2));
+                if(matcher.find())
+                {
+                    smsAggregate += matcher.group(0) +  "\n";
+                    //smsAggregate += matcher.toString() +  "\n";
+                    //smsAggregate += smsDate + " " + back24Hours +  "\n";
+                }
             }
         }
 
