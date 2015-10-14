@@ -10,12 +10,15 @@ import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.TextView;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class ReadSMSActivity extends Activity {
 
     //  GUI Widget
-    Button btnInbox;
-    TextView lblMsg, lblNo;
-    ListView lvMsg;
+    TextView lvMsg;
+
+    String smsAggregate;
 
     // Cursor Adapter
     SimpleCursorAdapter adapter;
@@ -26,24 +29,54 @@ public class ReadSMSActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_readsms);
 
-        lvMsg = (ListView) findViewById(R.id.lvMsg);
+        lvMsg = (TextView) findViewById(R.id.lvMsg);
 
-        // Create Inbox box URI
-        Uri inboxURI = Uri.parse("content://sms/sent");
+        // Define the source uri
+        Uri inboxURI = Uri.parse("content://sms/inbox");
 
         // List required columns
-        String[] reqCols = new String[] { "_id", "address", "body" };
+//        Column ID    -   Column Name
+//
+//        0                      :      _id
+//        1                      :     thread_id
+//        2                      :     address
+//        3                      :     person
+//        4                      :     date
+//        5                      :     protocol
+//        6                      :     read
+//        7                      :    status
+//        8                      :    type
+//        9                      :    reply_path_present
+//        10                   :    subject
+//        11                   :    body
+//        12                   :    service_center
+//        13                   :    locked
+        String[] dbColumns = new String[] { "_id", "address", "body", "date" };
 
         // Get Content Resolver object, which will deal with Content Provider
         ContentResolver cr = getContentResolver();
 
         // Fetch Inbox SMS Message from Built-in Content Provider
-        Cursor c = cr.query(inboxURI, reqCols, null, null, null);
+        Cursor c = cr.query(inboxURI, dbColumns, null, null, null);
 
-        // Attached Cursor with adapter and display in listview
-        adapter = new SimpleCursorAdapter(this, R.layout.row, c,
-                new String[] { "body", "address" }, new int[] {
-                R.id.lblMsg, R.id.lblNumber });
-        lvMsg.setAdapter(adapter);
+        // Iterate over cursor to populate a string of messages
+        while(c.moveToNext()) {
+
+            // We only want to retrieve SMS messages from FNB at this point
+            Pattern mPattern = Pattern.compile("^FNB.*");
+
+            Matcher matcher = mPattern.matcher(c.getString(2));
+            if(matcher.find())
+            {
+                smsAggregate += c.getString(2);
+            }
+        }
+
+        lvMsg.setText(smsAggregate);
+//        Attached Cursor with adapter and display in listview
+//        adapter = new SimpleCursorAdapter(this, R.layout.row, c,
+//                new String[] { "body", "address" }, new int[] {
+//                R.id.lblMsg, R.id.lblNumber });
+//        lvMsg.setAdapter(adapter);
     }
 }
