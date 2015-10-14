@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">SmsReader</string>
+    <string name="action_readsms">Read SMS</string>
+    <string name="text_welcome">Tap the \'Read SMS\' Button.</string>
+</resources>
