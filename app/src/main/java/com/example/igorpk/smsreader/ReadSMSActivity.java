@@ -7,6 +7,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.widget.TextView;
 
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,8 +39,18 @@ public class ReadSMSActivity extends Activity {
 
     TextView textOutput;
 
-    /* @TODO: Figure out how to change this to a float. */
+    // Array of computed values
     ArrayList<String> smsAggregate;
+
+
+    /**
+     * STUB
+     *
+     * Convert an String Array to JSON
+     *
+     * @param responseString
+     */
+    public void Jason(String responseString) {}
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -50,7 +62,7 @@ public class ReadSMSActivity extends Activity {
         smsAggregate = new ArrayList<String>();
 
         // Define the source uri
-        Uri inboxURI = Uri.parse("content://sms/inbox");
+        Uri inboxURI = Uri.parse("content://sms/sent");
 
         // Query columns
         /* @TODO: Review the fields needed - maybe there is an easier way? */
@@ -68,14 +80,16 @@ public class ReadSMSActivity extends Activity {
 
         // Iterate over cursor to populate a string of messages
         while(c.moveToNext()) {
-            /* @TODO: GET RID OF THE FUCKING null IN THE RESULTS!. */
 
             long smsDate = Long.parseLong(c.getString(3));
-            float total = 0;
+
             if (smsDate > (back24Hours)) {
                 // We only want to retrieve SMS messages from FNB at this point
                 /* @TODO:   Expand on this regex - it works, but it's too broad. The goal is to
-                   @TODO:   isolate the monetary portion of the sms only when from FNB */
+                   @TODO:   isolate the monetary portion of the sms only when from FNB.
+                   @TODO:   Lookahead regex for (paid|withdrawn|received) in message.
+
+                   */
                 // \\d*     any amount of digits
                 // \\.      followed by one period
                 // \\d{2}   followed by two digits
@@ -83,14 +97,13 @@ public class ReadSMSActivity extends Activity {
 
                 Matcher contentMatcher = contentPattern.matcher(c.getString(2));
 
-                /* @TODO: change find() to match()?  */
                 if (contentMatcher.find()) {
                         String mew = contentMatcher.group(0);
                         smsAggregate.add(mew);
                 }
             }
         }
-        /* @TODO POST a json payload to a host too?*/
+        /* @TODO POST a json payload to a host too? this.jason(smsAggregate.toArray()) */
         textOutput.setText(String.valueOf(smsAggregate));
     }
 }
