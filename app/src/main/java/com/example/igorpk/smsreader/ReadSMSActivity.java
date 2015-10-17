@@ -6,10 +6,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.widget.TextView;
-
-import org.json.JSONObject;
-
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,15 +40,7 @@ public class ReadSMSActivity extends Activity {
     // Array of computed values
     ArrayList<String> smsAggregate;
 
-
-    /**
-     * STUB
-     *
-     * Convert an String Array to JSON
-     *
-     * @param responseString
-     */
-    public void Jason(String responseString) {}
+    static final String DTAG = "ReadSMSActivity";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -59,14 +49,38 @@ public class ReadSMSActivity extends Activity {
 
         textOutput = (TextView) findViewById(R.id.lvMsg);
 
-        smsAggregate = new ArrayList<String>();
+        // Get our date on
+        Calendar calendar = Calendar.getInstance();
+
+        // Set calendar to the beginning of the month
+        // This can (and should) move out of this class and become configurable via parameters
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
+        calendar.set(Calendar.HOUR, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        Long oneMonthAgo = calendar.getTimeInMillis();
+
+        smsAggregate = parseInbox(oneMonthAgo);
+
+        /* @TODO POST a json payload to a host too? this.jason(smsAggregate.toArray()) */
+        textOutput.setText(String.valueOf(smsAggregate));
+    }
+
+    /**
+     * Parse the SMS Inbox of the device in order to apply a regex to each.
+     *
+     * @param startDate Long
+     * @return ArrayList
+     */
+    public ArrayList parseInbox(Long startDate) {
+
+        ArrayList results = new ArrayList<>();
 
         // Define the source uri
-        Uri inboxURI = Uri.parse("content://sms/sent");
+        Uri inboxURI = Uri.parse("content://sms/inbox");
 
         // Query columns
-        /* @TODO: Review the fields needed - maybe there is an easier way? */
-        String[] dbColumns = new String[] { "_id", "address", "body", "date" };
+        String[] dbColumns = new String[]{"_id", "address", "body", "date"};
 
         // Get Content Resolver object, which will deal with Content Provider
         ContentResolver cr = getContentResolver();
@@ -74,36 +88,27 @@ public class ReadSMSActivity extends Activity {
         // Fetch Inbox SMS Message from Built-in Content Provider
         Cursor c = cr.query(inboxURI, dbColumns, null, null, null);
 
-        /* @TODO: Convert this to 1 month - function to convert seconds. */
-        // Set current timestamp for comparison later
-        long back24Hours = (System.currentTimeMillis() - 84600000);
-
         // Iterate over cursor to populate a string of messages
-        while(c.moveToNext()) {
+        while (c.moveToNext()) {
 
-            long smsDate = Long.parseLong(c.getString(3));
+            Long smsDate = c.getLong(3);
 
-            if (smsDate > (back24Hours)) {
-                // We only want to retrieve SMS messages from FNB at this point
-                /* @TODO:   Expand on this regex - it works, but it's too broad. The goal is to
-                   @TODO:   isolate the monetary portion of the sms only when from FNB.
-                   @TODO:   Lookahead regex for (paid|withdrawn|received) in message.
-
-                   */
-                // \\d*     any amount of digits
-                // \\.      followed by one period
-                // \\d{2}   followed by two digits
-                Pattern contentPattern = Pattern.compile("\\d*\\.\\d{2}");
-
+            if (smsDate > startDate) {
+                /**
+                 * @TODO
+                 * BankLexer($bank)
+                 * construct($bank) { switch $bank, return regex }
+                 */
+                // Simply checks for a monetary value
+                Pattern contentPattern = Pattern.compile("\\w\\d*\\.\\d{2}");
                 Matcher contentMatcher = contentPattern.matcher(c.getString(2));
 
                 if (contentMatcher.find()) {
-                        String mew = contentMatcher.group(0);
-                        smsAggregate.add(mew);
+                    String regexMatch = contentMatcher.group(0);
+                    results.add(regexMatch);
                 }
             }
         }
-        /* @TODO POST a json payload to a host too? this.jason(smsAggregate.toArray()) */
-        textOutput.setText(String.valueOf(smsAggregate));
+        return results;
     }
 }
