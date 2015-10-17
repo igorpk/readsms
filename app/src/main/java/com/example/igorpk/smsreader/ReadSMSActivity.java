@@ -14,22 +14,6 @@ import java.util.regex.Pattern;
 /**
  * Read SMS Messages on the Android device
  *
- *         Column ID    -   Column Name
-
- 0                      :      _id
- 1                      :     thread_id
- 2                      :     address
- 3                      :     person
- 4                      :     date
- 5                      :     protocol
- 6                      :     read
- 7                      :    status
- 8                      :    type
- 9                      :    reply_path_present
- 10                   :    subject
- 11                   :    body
- 12                   :    service_center
- 13                   :    locked
 
  @TODO: Consider filtering messages based on MSISDN. Check Number -> If in FNB whitelist (+27820070***), continue -> Else skip.
  */
@@ -47,6 +31,8 @@ public class ReadSMSActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_readsms);
 
+        UploadQueueDbHelper db = new UploadQueueDbHelper(this);
+
         textOutput = (TextView) findViewById(R.id.lvMsg);
 
         // Get our date on
@@ -60,10 +46,10 @@ public class ReadSMSActivity extends Activity {
         calendar.set(Calendar.SECOND, 0);
         Long oneMonthAgo = calendar.getTimeInMillis();
 
-        smsAggregate = parseInbox(oneMonthAgo);
+        smsAggregate = new SMSIO(this).run(oneMonthAgo);
 
         /* @TODO POST a json payload to a host too? this.jason(smsAggregate.toArray()) */
-        textOutput.setText(String.valueOf(smsAggregate));
+        textOutput.setText(String.valueOf(smsAggregate) + "w00t!!");
     }
 
     /**
