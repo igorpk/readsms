@@ -5,9 +5,12 @@ import android.content.ContentResolver;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,8 +24,9 @@ public class ReadSMSActivity extends Activity {
 
     TextView textOutput;
 
-    // Array of computed values
+    // Array of retrieved messages
     ArrayList<String> smsAggregate;
+    String output;
 
     static final String DTAG = "ReadSMSActivity";
 
@@ -46,55 +50,20 @@ public class ReadSMSActivity extends Activity {
         calendar.set(Calendar.SECOND, 0);
         Long oneMonthAgo = calendar.getTimeInMillis();
 
+        // Get messages
         smsAggregate = new SMSIO(this).run(oneMonthAgo);
 
-        /* @TODO POST a json payload to a host too? this.jason(smsAggregate.toArray()) */
-        textOutput.setText(String.valueOf(smsAggregate) + "w00t!!");
-    }
+        // Parse Messages
+        Lexer lexer = new Lexer(smsAggregate);
+        ArrayList<String> parsedMessages = lexer.getSmslist();
 
-    /**
-     * Parse the SMS Inbox of the device in order to apply a regex to each.
-     *
-     * @param startDate Long
-     * @return ArrayList
-     */
-    public ArrayList parseInbox(Long startDate) {
+        Double output = 0.00;
 
-        ArrayList results = new ArrayList<>();
-
-        // Define the source uri
-        Uri inboxURI = Uri.parse("content://sms/inbox");
-
-        // Query columns
-        String[] dbColumns = new String[]{"_id", "address", "body", "date"};
-
-        // Get Content Resolver object, which will deal with Content Provider
-        ContentResolver cr = getContentResolver();
-
-        // Fetch Inbox SMS Message from Built-in Content Provider
-        Cursor c = cr.query(inboxURI, dbColumns, null, null, null);
-
-        // Iterate over cursor to populate a string of messages
-        while (c.moveToNext()) {
-
-            Long smsDate = c.getLong(3);
-
-            if (smsDate > startDate) {
-                /**
-                 * @TODO
-                 * BankLexer($bank)
-                 * construct($bank) { switch $bank, return regex }
-                 */
-                // Simply checks for a monetary value
-                Pattern contentPattern = Pattern.compile("\\w\\d*\\.\\d{2}");
-                Matcher contentMatcher = contentPattern.matcher(c.getString(2));
-
-                if (contentMatcher.find()) {
-                    String regexMatch = contentMatcher.group(0);
-                    results.add(regexMatch);
-                }
-            }
+        for(String amount : parsedMessages) {
+            output += Double.parseDouble(amount);
         }
-        return results;
+
+        /* @TODO POST a json payload to a host too? this.jason(smsAggregate.toArray()) */
+        textOutput.setText(output.toString());
     }
 }

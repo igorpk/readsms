@@ -75,19 +75,7 @@ public class SMSIO {
             Long smsDate = c.getLong(3);
 
             if (smsDate > lastTimestamp) {
-                /**
-                 * @TODO
-                 * BankLexer($bank)
-                 * construct($bank) { switch $bank, return regex }
-                 */
-                // Simply checks for a monetary value
-                Pattern contentPattern = Pattern.compile("\\w\\d*\\.\\d{2}");
-                Matcher contentMatcher = contentPattern.matcher(c.getString(2));
-
-                if (contentMatcher.find()) {
-                    String regexMatch = contentMatcher.group(0);
-                    results.add(regexMatch);
-                }
+                    results.add(c.getString(2));
             }
         }
         return results;
