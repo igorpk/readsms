@@ -31,7 +31,7 @@ public class ReadSMSActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_readsms);
 
-        UploadQueueDbHelper db = new UploadQueueDbHelper(this);
+        DBHelper db = new DBHelper(this);
 
         textOutput = (TextView) findViewById(R.id.lvMsg);
 
